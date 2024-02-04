@@ -1,32 +1,62 @@
-import { Model, Table, Column, DataType } from "sequelize-typescript";
+import { CreationOptional, DataTypes, InferAttributes, InferCreationAttributes, Model } from 'sequelize';
+import sequelize from '../db/index,';
 
-@Table({
-  tableName: "users",
-})
-export default class Users extends Model {
-  @Column({
-    type: DataType.INTEGER,
+
+const bcrypt = require('bcrypt');
+
+interface UserModel extends Model<InferAttributes<UserModel>, InferCreationAttributes<UserModel>> {
+  // Some fields are optional when calling UserModel.create() or UserModel.build()
+  id: CreationOptional<number>;
+  name: string;
+  lastName: string;
+  userName: string;
+  password: string;
+}
+
+const UserModel = sequelize.define<UserModel>('user', {
+  id: {
     primaryKey: true,
     autoIncrement: true,
-    field: "id"
-  })
-  id?: number;
+    type: DataTypes.INTEGER,
+  },
+  name: {
+    type: DataTypes.STRING,
+  },
+  lastName: {
+    type: DataTypes.STRING,
+  },
+  userName: {
+    type: DataTypes.STRING,
+    unique: {
+      name: "username",
+      msg: "username already in use"
+    }
+  },
+  password: {
+    type: DataTypes.STRING,
+  },
+});
 
-  @Column({
-    type: DataType.STRING(255),
-    field: "name"
-  })
-  name?: string;
+UserModel.beforeCreate((user, options) => {
+  const salt = bcrypt.genSaltSync();
+  user.password = bcrypt.hashSync(user.password, salt);
+});
 
-  @Column({
-    type: DataType.STRING(255),
-    field: "last_name"
-  })
-  last_name?: string;
+UserModel.beforeUpdate((user, options) => {
+  if (user.changed('password')) {
+    const salt = bcrypt.genSaltSync();
+    user.password = bcrypt.hashSync(user.password, salt);
+  }
+});
 
-  @Column({
-    type: DataType.BOOLEAN,
-    field: "username"
-  })
-  username?: boolean;
+async function doStuff() {
+  const instance = await UserModel.findByPk(1, {
+    rejectOnEmpty: true,
+  });
+
+  console.log(instance.id);
 }
+
+// UserModel.sync();
+
+export default UserModel
