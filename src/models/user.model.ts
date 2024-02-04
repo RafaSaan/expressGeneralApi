@@ -9,7 +9,7 @@ interface UserModel extends Model<InferAttributes<UserModel>, InferCreationAttri
   id: CreationOptional<number>;
   name: string;
   lastName: string;
-  userName: string;
+  username: string;
   password: string;
 }
 
@@ -25,8 +25,9 @@ const UserModel = sequelize.define<UserModel>('user', {
   lastName: {
     type: DataTypes.STRING,
   },
-  userName: {
+  username: {
     type: DataTypes.STRING,
+    allowNull: false,
     unique: {
       name: "username",
       msg: "username already in use"
